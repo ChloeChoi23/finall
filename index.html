@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>기억으로 깨어나는 습지</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Shilla';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2206-02@1.0/Shilla_CultureB-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html,body{
+            height:100%;
+            overflow:hidden;
+            background:#0c1913;
+            font-family:'Noto Sans KR',sans-serif;
+            color:#dfe8e3;
+        }
+        #bg{
+            position:fixed;
+            inset:0;
+            z-index:0;
+            pointer-events:none;
+            background: linear-gradient(rgba(10,20,15,0.6),rgba(5,10,8,0.8)), url('이미지 2025. 11. 12. 00.58.jpeg') center/cover no-repeat;
+            filter:brightness(0.6) saturate(0.9);
+            opacity:1;
+            transition:opacity 2s ease, filter 3s ease, background 3s ease;
+        }
+        #bg.next{
+            background: linear-gradient(rgba(5,8,6,0.3),rgba(0,0,0,0.6)), url('wetland_subtle_fast.gif') center/cover no-repeat;
+            filter:brightness(0.9) contrast(1.05);
+        }
+        canvas{
+            position:absolute;
+            inset:0;
+            z-index:1;
+            width:100%;
+            height:100%;
+            display:block;
+        }
+        #statsIntro{
+            position:absolute;
+            inset:0;
+            background:rgba(10,20,15,0.75);
+            backdrop-filter:blur(5px);
+            z-index:5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            opacity:1;
+            transition:opacity 1.6s ease;
+        }
+        #statsIntro.hide{opacity:0; pointer-events:none;}
+        .stats-title{
+            font-family:'Shilla';
+            font-size:clamp(32px,4.5vw,64px);
+            color:#ecfff3;
+            margin-bottom:40px;
+            opacity:0;
+            transform:translateY(20px);
+            transition:opacity 1s ease, transform 1.2s ease;
+        }
+        .stats-title.show{opacity:1; transform:translateY(0);}
+        .stats-table{
+            width:70%;
+            max-width:650px;
+            border-collapse:collapse;
+            font-size:clamp(16px,1.6vw,20px);
+            opacity:0;
+            transform:translateY(20px);
+            transition:opacity 1.2s ease, transform 1.2s ease;
+        }
+        .stats-table.show{opacity:1; transform:translateY(0);}
+        .stats-table tr{border-bottom:1px solid rgba(255,255,255,0.12);}
+        .stats-table td{padding:16px 10px;}
+        .value{text-align:right; font-weight:600; color:#c7ffe0;}
+        .counter{opacity:0; transition:opacity .35s ease;}
+        .counter.show{opacity:1;}
+        .counter.red{color:#ff3a3a!important;}
+        @keyframes dropIn {
+            0%{transform:translateY(-60px);opacity:0;}
+            60%{transform:translateY(0);opacity:1;}
+            75%{transform:translateY(-12px);}
+            100%{transform:translateY(0);}
+        }
+        .counter.drop{animation:dropIn .85s ease-out forwards;}
+        #alertFlash{
+            position:fixed;
+            inset:0;
+            background:rgba(255,0,0,0.65);
+            z-index:6;
+            opacity:0;
+            transition:opacity .4s ease;
+            pointer-events:none;
+        }
+        #alertFlash.show{opacity:1;}
+        .center-text{
+            position:absolute;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            width:90%;
+            text-align:center;
+            opacity:0;
+            transition:opacity 1.8s ease;
+            z-index:3;
+        }
+        .center-text.show{opacity:1;}
+        .subtitle{
+            position:absolute;
+            top:-22vh;
+            width:100%;
+            font-size:clamp(16px,1.8vw,22px);
+            white-space:pre-line;
+            opacity:0;
+            transform:translateY(12px);
+            transition:opacity 1.3s ease, transform 1.3s ease;
+        }
+        .subtitle.show{opacity:1; transform:translateY(0);}
+        .title{
+            font-family:'Shilla';
+            font-size:clamp(40px,6.3vw,82px);
+            opacity:0;
+            transition:opacity 1s ease;
+        }
+        .title.show{opacity:1;}
+        .main-title{
+            margin-top:3vh;
+            font-family:'Shilla';
+            font-size:clamp(72px,12vw,150px);
+            color:rgba(255,255,255,0.65);
+            opacity:0;
+            transform:translateY(20px);
+            transition:opacity 2.2s ease, transform 2.2s ease;
+        }
+        .main-title.show{opacity:1; transform:translateY(0);}
+        .enter-btn{
+            position:fixed;
+            left:50%;
+            bottom:6vh;
+            transform:translateX(-50%);
+            padding:0.8rem 2.4rem;
+            font-family:'Shilla';
+            font-size:1.1rem;
+            color:#eaf5eb;
+            background:rgba(255,255,255,0.1);
+            border-radius:999px;
+            border:none;
+            cursor:pointer;
+            opacity:0;
+            transition:opacity 1.2s ease;
+            z-index:5;
+        }
+        .enter-btn.show{opacity:1;}
+        .fade-out{opacity:0!important; pointer-events:none!important;}
+        .name{
+            position:absolute;
+            z-index:4;
+            color:white;
+            font-family:'Shilla';
+            font-size:1.4rem;
+            opacity:0;
+            transform:translate(-50%,-50%) scale(0.8);
+            transition:opacity .4s ease, transform 1.3s ease;
+            pointer-events:none;
+        }
+        .name.show{opacity:1; transform:translate(-50%,-50%) scale(1.05);}
+        .creature{
+            position:fixed;
+            z-index:2;
+            opacity:0.35;
+            filter:blur(1px) contrast(0.8);
+            transition:opacity .8s ease, filter .8s ease, transform .8s ease;
+            animation:floatSoft 12s ease-in-out infinite alternate;
+            pointer-events:auto;
+        }
+        .creature.hide{
+            opacity:0;
+            filter:blur(4px) contrast(0.5);
+        }
+        .creature.gone{
+            display:none;
+        }
+        .creature:hover{
+            opacity:1;
+            filter:blur(0) contrast(1);
+        }
+        @keyframes floatSoft{
+            0%{transform:translate3d(0,0,0);}
+            25%{transform:translate3d(20px,-15px,0);}
+            50%{transform:translate3d(-18px,12px,0);}
+            75%{transform:translate3d(15px,18px,0);}
+            100%{transform:translate3d(-15px,-12px,0);}
+        }
+        #creature1{ bottom:10%; left:40%; width:13vw; animation-duration:15s; }
+        #creature2{ top:16%; right:32%; width:12vw; animation-duration:13s; }
+        #creature3{ top:58%; right:6%; width:26vw; animation-duration:14s; }
+        #creature4{ top:50%; left:10%; width:13vw; animation-duration:12s; }
+        #creature5{ top:28%; left:7%; width:19vw; animation-duration:16s; }
+        #creature6{ top:17%; right:9%; width:10vw; animation-duration:15s; }
+        #creature7{ bottom:30%; left:34%; width:15vw; animation-duration:18s; }
+        #creature8{ top:24%; right:20%; width:16vw; animation-duration:17s; }
+        #creature9{ top:18%; right:12%; width:11vw; animation-duration:14s; }
+        #creature10{bottom:18%; right:32%; width:14vw; animation-duration:12s; }
+        #creature11{bottom:42%; left:24%; width:11vw; animation-duration:13s; }
+        #mouseGuide{
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            font-size:1.8rem;
+            color:white;
+            font-family:'Shilla';
+            opacity:0;
+            transition:opacity 1.5s ease;
+            z-index:30;
+        }
+        #mouseGuide.show{opacity:1;}
+        #mouseGuide.hide{opacity:0;}
+        #infoBox{
+            position:absolute;
+            width:20vw;
+            background:rgba(5,15,12,0.92);
+            border:1px solid rgba(160,255,210,0.85);
+            box-shadow:0 0 24px rgba(0,255,210,0.35);
+            padding:18px 22px;
+            display:none;
+            color:#ccffdd;
+            font-family:'Noto Sans KR',sans-serif;
+            z-index:999999 !important;
+        }
+        #infoBox .box-title{
+            font-family:'Shilla';
+            font-size:1.4rem;
+            margin-bottom:6px;
+            letter-spacing:0.03em;
+        }
+        #infoBox .box-img{
+            width:100%;
+            margin:8px 0 10px;
+            filter:contrast(1.05);
+            display:block;
+        }
+        #infoBox .box-desc{
+            font-size:0.8rem;
+            line-height:1.5;white-space: pre-line;
+        }
+        .line{
+            position:absolute;
+            height:2px;
+            background:rgba(255,50,50,0.8);
+            transform-origin:left center;
+            z-index:2000;
+        }
+        .point{
+            position:absolute;
+            width:14px;
+            height:14px;
+            background:#5df97a;
+            border-radius:50%;
+            border:2px solid #55ff77;
+            z-index:5000;
+        }
+        .point-label{
+            position:absolute;
+            font-family:'Shilla';
+            font-size:14px;
+            color:#5df97a;
+            transform:translate(-50%,-50%);
+        }
+        .infoBox-close{
+            position:absolute;
+            top:6px;
+            right:10px;
+            font-size:18px;
+            cursor:pointer;
+            color:#99ffcc;
+        }
+        .shape-overlay{
+            position:fixed;
+            display:none;
+            pointer-events:none;
+            z-index:3000;
+            width:100%;
+            height:100%;
+            object-fit:contain;
+        }
+        .shape-overlay.show{
+            display:block;
+        }
+        #fullFadeBlack, #fullFadeAfter {
+            position:fixed;
+            inset:0;
+            z-index:999999999;
+            pointer-events:none;
+            opacity:0;
+}
+       #fullFadeBlack {
+        background:#000;
+        transition:opacity 1.6s ease; 
+}
+
+       #fullFadeAfter {
+        background:url('after.jpg') center/cover no-repeat;
+        transition:opacity 2.4s ease;   
+}
+
+
+        #endingCards {
+            display:flex;
+            gap:32px;
+            overflow-x:auto;
+            padding:40px 80px 60px;
+            width:100%;
+            max-width:1800px;
+            opacity:0;
+            transform:translateY(40px);
+            transition:opacity 1.5s ease, transform 1.5s ease;
+            scroll-behavior:smooth;
+        }
+        #endingCards::-webkit-scrollbar {
+            display:none;
+        }
+
+        #endingCards .card {
+            width:460px;
+            background:#0b0f0e;
+            border-radius:20px;
+            padding:22px;
+            color:white;
+            flex-shrink:0;
+            border:1px solid rgba(160,255,210,0.85); 
+            box-shadow:0 0 24px rgba(0,255,210,0.35);
+            transition:0.35s ease;
+}
+
+        #endingCards .card .imgWrap {
+            width:100%;
+            height:240px; 
+            border-radius:14px;
+            background:#000;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            overflow:hidden;
+            margin-bottom:14px;
+        }
+        #endingCards .card img {
+            width:100%;
+            height:100%;
+            object-fit:contain;
+            filter:drop-shadow(0 0 4px rgba(93,249,122,0.45));
+        }
+        #endingCards .card h3{
+            font-family:'Shilla';
+            font-size:1.4rem;
+            margin-bottom:4px;
+        }
+        #endingCards .card p{
+            font-size:0.9rem;
+            opacity:0.85;
+            line-height:1.45;
+        }
+        #endingCards .card:hover {
+            transform:translateY(-10px);
+            border:1px solid rgba(160,255,210,1);
+            box-shadow:0 0 24px rgba(0,255,210,0.85), 0 0 40px rgba(0,255,210,0.45);
+}
+
+        .shape-overlay.show{
+            display:block;
+            pointer-events:none !important;
+        }
+        #endingScreen{
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+}
+         #endingTitle,
+         #endingMessage,
+         #endingSub{
+            text-align: center;
+            margin-left: 0;
+            margin-right: 0;
+}
+
+
+    </style>
+</head>
+<body tabindex="-1">
+    <video id="bgm" src="forestsound.mp3" autoplay loop playsinline style="display:none"></video>
+    <audio id="touchSound" src="touch.mp3" preload="auto"></audio>
+    <audio id="afterSound" src="after.webm" preload="auto"></audio>
+
+    <div id="bg"></div>
+    <canvas id="ripples"></canvas>
+    <canvas id="lines"></canvas>
+    <div id="alertFlash"></div>
+
+    <div id="mouseGuide">마우스를 클릭해 생물들을 깨워주세요.</div>
+
+    <div id="statsIntro">
+        <div class="stats-title" id="statsTitle">한국 습지, 사라지는 숫자들</div>
+        <table class="stats-table" id="statsTable">
+            <tr><td>내륙 습지 소실</td><td class="value"><span class="counter" data-val="176">0</span>곳</td></tr>
+            <tr><td>연안 습지 감소</td><td class="value"><span class="counter" data-val="5.2">0</span>㎢</td></tr>
+            <tr><td>습지보호지역</td><td class="value"><span class="counter" data-val="58">0</span>개소</td></tr>
+            <tr><td>멸종위기 야생생물</td><td class="value"><span class="counter" data-val="282">0</span>종</td></tr>
+        </table>
+    </div>
+
+    <div class="center-text" id="intro">
+        <div class="subtitle" id="subtitle"></div>
+        <div class="title" id="title"></div>
+        <div class="main-title" id="mainTitle">화포천</div>
+    </div>
+
+    <img src="a.png" id="creature1" class="creature gone" alt="">
+    <img src="b.png" id="creature2" class="creature gone" alt="">
+    <img src="c.png" id="creature3" class="creature gone" alt="">
+    <img src="d.png" id="creature4" class="creature gone" alt="">
+    <img src="e.png" id="creature5" class="creature gone" alt="">
+    <img src="f.png" id="creature6" class="creature gone" alt="">
+    <img src="g.png" id="creature7" class="creature gone" alt="">
+    <img src="h.png" id="creature8" class="creature gone" alt="">
+    <img src="i.png" id="creature9" class="creature gone" alt="">
+    <img src="j.png" id="creature10" class="creature gone" alt="">
+    <img src="k.png" id="creature11" class="creature gone" alt="">
+
+    <img src="a1.png" id="overlay-creature1" class="shape-overlay">
+    <img src="b1.png" id="overlay-creature2" class="shape-overlay">
+    <img src="c1.png" id="overlay-creature3" class="shape-overlay">
+    <img src="d1.png" id="overlay-creature4" class="shape-overlay">
+    <img src="e1.png" id="overlay-creature5" class="shape-overlay">
+    <img src="f1.png" id="overlay-creature6" class="shape-overlay">
+    <img src="g1.png" id="overlay-creature7" class="shape-overlay">
+    <img src="h1.png" id="overlay-creature8" class="shape-overlay">
+    <img src="i1.png" id="overlay-creature9" class="shape-overlay">
+    <img src="j1.png" id="overlay-creature10" class="shape-overlay">
+    <img src="k1.png" id="overlay-creature11" class="shape-overlay">
+
+    <button id="enterBtn" class="enter-btn">ENTER</button>
+
+    <div id="infoBox">
+        <div class="infoBox-close">×</div>
+        <div class="box-title"></div>
+        <img class="box-img" alt="">
+        <div class="box-desc"></div>
+    </div>
+<script>
+    let overlayShownCount = 0;
+    let autoRippleInterval = null;
+
+    function updateGuideMessage() {
+    const guide = document.getElementById("clickGuide");
+
+    if (awakenedCount === 0) {
+        guide.textContent = "생물을 클릭해보세요.";
+    } 
+    else if (awakenedCount === 1) {
+        guide.textContent = "좋아요! 생물들이 깨어나고 있어요.";
+    } 
+    else if (awakenedCount === 3) {
+        guide.textContent = "계속 찾아주세요. 이곳은 당신의 기억으로 살아납니다.";
+    } 
+    else if (awakenedCount === 5) {
+        guide.textContent = "절반을 찾았어요. 습지의 생명이 깨어나고 있습니다.";
+    } 
+    else if (awakenedCount === 8) {
+        guide.textContent = "거의 다 찾았어요. 조금만 더!";
+    }
+    else if (awakenedCount === totalCreatures) {
+        guide.textContent = "모든 생물들이 깨어났습니다.";
+    }
+}
+
+
+
+function playClickSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 1000;
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.08);
+}
+
+const bgm=document.getElementById("bgm");
+bgm.volume=0.05;
+bgm.play().catch(()=>{
+    const resume=()=>{
+        bgm.play();
+        document.removeEventListener("click",resume);
+        document.removeEventListener("keydown",resume);
+    };
+    document.addEventListener("click",resume);
+    document.addEventListener("keydown",resume);
+});
+
+function increaseVolume(){
+    let v=0.05;
+    const id=setInterval(()=>{
+        v+=0.02;
+        bgm.volume=v;
+        if(v>=0.6) clearInterval(id);
+    },150);
+}
+
+const touchSound = document.getElementById("touchSound");
+const creatures = Array.from(document.querySelectorAll('.creature'));
+let awakenedCount = 0;
+const totalCreatures = creatures.length;
+const counterUI = document.getElementById("progressCounter");
+
+const canvas=document.getElementById('ripples'), ctx=canvas.getContext('2d');
+let W=canvas.width=innerWidth, H=canvas.height=innerHeight;
+window.addEventListener('resize',()=>{
+    W=canvas.width=innerWidth;
+    H=canvas.height=innerHeight;
+});
+
+let ripples=[], allowNames=false;
+
+document.addEventListener('mousemove', e=>{
+    ripples.push({x:e.clientX,y:e.clientY,radius:0,alpha:1,speed:3.2});
+    if(allowNames) createFloatingName(e.clientX,e.clientY);
+});
+function autoRipples(){
+    const x = Math.random() * W;
+    const y = Math.random() * H;
+
+    ripples.push({
+        x: x,
+        y: y,
+        radius: 0,
+        alpha: 1,
+        speed: 2.5
+    });
+}
+function draw(){
+    ctx.clearRect(0,0,W,H);
+    ripples.forEach((r,i)=>{
+        ctx.beginPath();
+        ctx.arc(r.x,r.y,r.radius,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(200,255,225,${r.alpha*0.55})`;
+        ctx.lineWidth=2;
+        ctx.stroke();
+
+        r.radius+=r.speed;
+        r.alpha*=0.965;
+        if(r.alpha<0.02) ripples.splice(i,1);
+    });
+    requestAnimationFrame(draw);
+}
+draw();
+
+const species=[
+    "수달","독수리","가시연꽃","큰고니","삵","노랑부리저어새",
+    "큰기러기","조롱이","참수리","귀이빨대칭이","수리부엉이","뜸부기"
+];
+let recentNames=[];
+
+function createFloatingName(x,y){
+    for(const p of recentNames){
+        if(Math.hypot(x-p.x,y-p.y)<130) return;
+    }
+    recentNames.push({x,y});
+    if(recentNames.length>6) recentNames.shift();
+
+    const el=document.createElement("div");
+    el.className="name";
+    el.textContent=species[Math.floor(Math.random()*species.length)];
+    el.style.left=x+"px";
+    el.style.top=y+"px";
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add("show"));
+
+    const dx=(Math.random()-0.5)*90, dy=(Math.random()-0.5)*90;
+
+    el.animate(
+        [
+            {opacity:1,transform:"translate(-50%,-50%) scale(1)"},
+            {opacity:0,transform:`translate(${dx}px,${dy}px) scale(1.15)`}
+        ],
+        {duration:4000,easing:"ease-out"}
+    );
+
+    setTimeout(()=>el.remove(),4000);
+}
+
+function scheduleCreatureFade(){
+    creatures.forEach((el, index) => {
+        setInterval(() => {
+
+            if (el.classList.contains("alreadyClicked")) {
+                el.classList.add("gone");
+                return;
+            }
+            el.classList.toggle("hide");
+
+        }, 3000 + index * 400);
+    });
+}
+
+
+
+function startStatsIntro(){
+    const statsIntro=document.getElementById('statsIntro');
+    const statsTitle=document.getElementById('statsTitle');
+    const statsTable=document.getElementById('statsTable');
+    const counters=document.querySelectorAll('.counter');
+
+    setTimeout(()=>statsTitle.classList.add('show'),700);
+    setTimeout(()=>statsTable.classList.add('show'),1800);
+    
+    setTimeout(()=>{
+        counters.forEach((el,i)=>{
+            setTimeout(()=>{
+                el.classList.add('show');
+                animateCounter(el);
+            },i*600);
+        });
+    },2400);
+    
+    setTimeout(()=>{
+        statsIntro.classList.add('hide');
+        triggerFlashAndIntro();
+    },9000);
+}
+
+function animateCounter(el){
+    const target=parseFloat(el.dataset.val);
+    let current=0;
+    const step=target/55;
+
+    const id=setInterval(()=>{
+        current+=step;
+        if(current>=target){
+            current=target;
+            clearInterval(id);
+            setTimeout(()=>el.classList.add('drop'),150);
+            setTimeout(()=>el.classList.add('red'),400);
+        }
+        el.textContent=(target%1===0)?Math.floor(current):current.toFixed(1);
+    },35);
+}
+
+function triggerFlashAndIntro(){
+    const flash=document.getElementById('alertFlash');
+    let count = 0;
+    const flashLoop = setInterval(()=>{
+        flash.classList.toggle('show');
+        count++;
+        if(count >= 10){
+            clearInterval(flashLoop);
+            flash.classList.remove('show');
+            startMainIntro();
+        }
+    },120);
+}
+
+function startMainIntro(){
+    autoRippleInterval = setInterval(autoRipples, 700);
+
+    const intro    = document.getElementById('intro');
+    const subtitle = document.getElementById('subtitle');
+    const titleEl  = document.getElementById('title');
+    const mainTitle = document.getElementById('mainTitle');
+    const enterBtn  = document.getElementById('enterBtn');
+
+    intro.classList.add('show');
+
+    const warning = "지금 이 순간에도\n한 곳의 습지가 또 사라졌습니다.\n그리고… 이곳 또한 언제 사라질지는 모릅니다.";
+    let i = 0;
+
+    (function typeWarning(){
+        subtitle.classList.add('show');
+        if (i < warning.length){
+            subtitle.textContent += warning[i++];
+            setTimeout(typeWarning, 70);
+        } else {
+            startTitle();
+        }
+    })();
+
+    function startTitle(){
+        const t = "기억으로 깨어나는 습지,";
+        let j = 0;
+
+        (function typeT(){
+            titleEl.classList.add('show');
+            if (j < t.length){
+                titleEl.textContent += t[j++];
+                setTimeout(typeT, 120);
+            } else {
+                setTimeout(()=>{
+                    mainTitle.classList.add('show');
+                    allowNames = true;
+                }, 700);
+                setTimeout(()=>enterBtn.classList.add('show'), 2000);
+            }
+        })();
+    }
+}
+
+function goNext(){
+
+    /* 🔓 afterSound 오디오 unlock (ENTER 클릭 시) */
+    const afterSound = document.getElementById("afterSound");
+    afterSound.volume = 0;
+    afterSound.play().then(() => {
+        afterSound.pause();
+        afterSound.currentTime = 0;
+    });
+
+    clearInterval(autoRippleInterval);
+
+    clearInterval(autoRippleInterval);
+    const bg=document.getElementById('bg');
+    const intro=document.getElementById('intro');
+    const btn=document.getElementById('enterBtn');
+    document.getElementById("clickGuide").style.opacity = 1;
+    document.getElementById("progressCounter").style.opacity = 1; 
+
+
+    intro.classList.add('fade-out');
+    btn.classList.add('fade-out');
+    creatures.forEach(el=>el.classList.remove('gone'));
+    scheduleCreatureFade();
+    increaseVolume();
+
+    setTimeout(()=>bg.classList.add('next'),1500);
+
+    const guide = document.getElementById("mouseGuide");
+    guide.classList.add("show");
+    setTimeout(()=>{
+        guide.classList.add("hide");
+    },5000);
+    
+    allowNames = false;
+}
+
+document.getElementById('enterBtn').addEventListener('click', goNext);
+window.addEventListener('keydown', e=>{
+    if(e.key==="Enter") goNext();
+});
+
+
+const info = {
+    creature1:{
+        name:"가시연꽃",
+        desc:"* 연못에 자라는 한해살이 수생식물.\n* 잎과 꽃줄기에 가시.\n* 여름에 자주색 꽃.\n* 멸종위기 야생생물 II급\n* 분포: 한국 중남부, 중국, 일본"
+    },
+    creature2:{
+        name:"뜸부기",
+        desc:"* 논과 습지에 사는 여름철새\n* 짙은 깃털과 노란 부리\n* 멸종위기 야생생물 II급\n* 분포: 한반도·일본·동남아"
+    },
+    creature3:{
+        name:"큰고니",
+        desc:"* 겨울철새, 큰 백색 고니\n* 목을 곧게 세우고 헤엄침\n* 멸종위기 야생생물 II급\n* 분포: 시베리아–한국–일본"
+    },
+    creature4:{
+        name:"삵",
+        desc:"* 중형 맹수, 야행성\n* 설치류·조류 사냥\n* 멸종위기 야생생물 II급\n* 분포: 전국, 러시아·중국·시베리아"
+    },
+    creature5:{
+        name:"노랑부리저어새",
+        desc:"* 주걱모양 부리, 흰 몸\n* 겨울철새\n* 멸종위기 야생생물 II급\n* 분포: 서해안, 제주, 동아시아"
+    },
+    creature6:{
+        name:"조롱이",
+        desc:"* 작은 맹금류, 숲속 번식\n* 멸종위기 야생생물 II급\n* 분포: 전국"
+    },
+    creature7:{
+        name:"수리부엉이",
+        desc:"* 한국 최대 올빼미\n* 단독 생활·야행성\n* 멸종위기 야생생물 II급\n* 분포: 전국, 유라시아"
+    },
+    creature8:{
+        name:"독수리",
+        desc:"* 큰 체구의 겨울철 맹금류\n* 사체를 먹는 청소동물 역할\n* 멸종위기 야생생물 II급\n* 분포: 한국·몽골·중앙아시아"
+    },
+    creature9:{
+        name:"참수리",
+        desc:"* 거대한 맹금류\n* 흰 꼬리+노란 부리 특징\n* 멸종위기 야생생물 I급\n* 분포: 동북아시아"
+    },
+    creature10:{
+        name:"수달",
+        desc:"* 하천·호수 서식 포유류\n* 물갈퀴가 있어 수영 특화\n* 멸종위기 야생생물 I급\n* 분포: 전국"
+    },
+    creature11:{
+        name:"귀이빨대칭이",
+        desc:"* 한국 최대 담수 패류\n* 진주층이 형성되는 조개\n* 멸종위기 야생생물 I급\n* 분포: 전국"
+    }
+};
+
+const overlays = {
+    creature1: document.getElementById("overlay-creature1"),
+    creature2: document.getElementById("overlay-creature2"),
+    creature3: document.getElementById("overlay-creature3"),
+    creature4: document.getElementById("overlay-creature4"),
+    creature5: document.getElementById("overlay-creature5"),
+    creature6: document.getElementById("overlay-creature6"),
+    creature7: document.getElementById("overlay-creature7"),
+    creature8: document.getElementById("overlay-creature8"),
+    creature9: document.getElementById("overlay-creature9"),
+    creature10: document.getElementById("overlay-creature10"),
+    creature11: document.getElementById("overlay-creature11"),
+};
+
+const infoBox = document.getElementById("infoBox");
+const boxTitle = infoBox.querySelector(".box-title");
+const boxImg = infoBox.querySelector(".box-img");
+const boxDesc = infoBox.querySelector(".box-desc");
+let prevBoxElement = null;
+let lines = [];
+let activePoints=[];
+
+
+function showOverlay(creature){
+    const overlay = overlays[creature.id];
+    overlay.classList.add("show");
+    const rect = creature.getBoundingClientRect();
+    overlay.style.left = rect.left + "px";
+    overlay.style.top = rect.top + "px";
+    overlay.style.width = rect.width + "px";
+    overlay.style.height = rect.height + "px";
+    creature.classList.add("gone");
+}
+
+
+creatures.forEach(c => {
+
+    c.addEventListener("click", (e) => {
+
+        if (c.classList.contains("alreadyClicked")) return;
+        c.classList.add("alreadyClicked");
+
+        awakenedCount++;
+        document.getElementById("progressCounter").textContent =
+        awakenedCount + " / " + totalCreatures;
+        updateGuideMessage();
+
+
+        playClickSound();
+        touchSound.currentTime = 0;
+        touchSound.play();
+
+        const rect = c.getBoundingClientRect();
+        const data = info[c.id];
+        const overlay = overlays[c.id];
+        const newBox = infoBox.cloneNode(true);
+        document.body.appendChild(newBox);
+
+        newBox.style.display = "block";
+        newBox.style.visibility = "hidden";
+
+        newBox.querySelector(".box-title").textContent = data.name;
+        newBox.querySelector(".box-img").src = c.src;
+        newBox.querySelector(".box-desc").textContent = data.desc;
+
+        const bw = newBox.offsetWidth;
+        const bh = newBox.offsetHeight;
+
+        let left = e.clientX;
+        let top = e.clientY;
+        const PADDING = 20;
+
+        if (left < PADDING) left = PADDING;
+        if (left + bw > window.innerWidth - PADDING)
+            left = window.innerWidth - bw - PADDING;
+
+        if (top < PADDING) top = PADDING;
+        if (top + bh > window.innerHeight - PADDING)
+            top = window.innerHeight - bh - PADDING;
+
+        newBox.style.left = left + "px";
+        newBox.style.top = top + "px";
+        newBox.style.visibility = "visible";
+
+        newBox.querySelector(".infoBox-close").addEventListener("click", () => {
+            playClickSound();
+            newBox.remove();
+
+            overlay.classList.add("show");
+            overlay.style.left = rect.left + "px";
+            overlay.style.top = rect.top + "px";
+            overlay.style.width = rect.width + "px";
+            overlay.style.height = rect.height + "px";
+
+            overlayShownCount++;
+            checkAllAwakened();
+        });
+    });
+});
+    function checkAllAwakened() {
+    if (awakenedCount === totalCreatures && overlayShownCount === totalCreatures) {
+
+        const fadeBlack = document.getElementById("fullFadeBlack");
+        const fadeAfter = document.getElementById("fullFadeAfter");
+        const bg = document.getElementById("bg");
+
+        fadeBlack.style.transition = "opacity 0.25s ease-out";
+        fadeBlack.style.opacity = 1;
+
+setTimeout(() => {
+const afterSound = document.getElementById("afterSound");
+
+afterSound.currentTime = 0;
+afterSound.volume = 0;
+afterSound.play();
+
+let fadeInterval = setInterval(() => {
+    bgm.volume = Math.max(0, bgm.volume - 0.025);
+    afterSound.volume = Math.min(1, afterSound.volume + 0.025);
+    if (bgm.volume === 0 && afterSound.volume === 1) {
+        clearInterval(fadeInterval);
+        bgm.pause();
+    }
+}, 120);
+
+
+    bg.style.background =
+    "linear-gradient(rgba(5,8,6,0.3),rgba(0,0,0,0.6)), url('after.jpg') center/cover no-repeat";
+
+    document.querySelectorAll('.creature, .shape-overlay').forEach(el => {
+        el.style.transition = "opacity 0.25s ease-out";
+        el.style.opacity = 0;
+    });
+
+    fadeAfter.style.transition = "opacity 3s ease-out";
+    fadeAfter.style.opacity = 1;
+
+    fadeBlack.style.transition = "opacity 1.2s ease-out";
+    fadeBlack.style.opacity = 0;
+
+    setTimeout(() => {
+        fadeAfter.style.opacity = 0;
+    }, 3000);
+
+}, 400);
+
+
+        setTimeout(showEnding, 3800);
+    }
+}
+
+
+
+
+
+function showEnding(){
+    const textBox = document.getElementById("endingTextContainer");
+    const line1   = document.getElementById("endingLine1");
+    const line2   = document.getElementById("endingLine2");
+
+    const end   = document.getElementById("endingScreen");
+    const msg   = document.getElementById("endingMessage");
+    const title = document.getElementById("endingTitle");
+    const cards = document.getElementById("endingCards");
+
+    textBox.style.opacity = 1;
+
+    setTimeout(() => {
+        line1.style.opacity = 1;
+    }, 300);
+
+    setTimeout(() => {
+        line2.style.opacity = 1; 
+    }, 1700);
+
+    setTimeout(() => {
+        line1.style.opacity = 0;
+        line2.style.opacity = 0;
+        textBox.style.opacity = 0;
+    }, 4800); 
+
+    setTimeout(() => {
+        end.style.display = "flex";
+
+        setTimeout(()=> {
+            msg.style.opacity = 1;
+        }, 300);
+
+        setTimeout(()=> {
+            msg.style.opacity = 0;
+        }, 2800);
+
+        setTimeout(()=> {
+            title.style.opacity = 1;
+        }, 3600);
+        setTimeout(()=> {
+            document.getElementById("endingSub");
+            endingSub.style.opacity = 1;
+        }, 8200);
+
+
+        setTimeout(()=>{
+            cards.style.opacity = 1;
+            cards.style.transform = "translateY(0)";
+        }, 4800);
+        const cardContainer = document.getElementById("endingCards");
+        const nextStep = document.getElementById("nextStepScreen");
+
+        cardContainer.addEventListener("scroll", () => {
+            const maxScroll = cardContainer.scrollWidth - cardContainer.clientWidth;
+            
+            if (cardContainer.scrollLeft >= maxScroll - 10) {
+                nextStep.style.display = "block";
+                nextStep.style.opacity = 0;
+
+                setTimeout(() => {
+                    nextStep.style.transition = "opacity 1.5s ease";
+                    nextStep.style.opacity = 1;
+
+                    nextStep.innerHTML = `
+                        <div style="
+                            position:absolute;
+                            top:50%;
+                            left:50%;
+                            transform:translate(-50%, -50%);
+                            text-align:center;
+                            width:100%;
+                        ">
+                            <h1 style="
+                                font-family:'Shilla';
+                                font-size:2.6rem;
+                                margin-bottom:20px;
+                            ">
+                                당신이 기억했기에, 이곳은 오늘도 숨을 쉽니다.
+                            </h1>
+
+                            <p style="
+                                font-size:1.3rem;
+                                color:#cccccc;
+                                line-height:1.8;
+                                margin-top:20px;
+                            ">
+                                작은 관심이 또 하나의 생명을 지켜냅니다.<br>
+                            </p>
+                        </div>
+                    `;
+                }, 200);
+            }
+        });
+
+    }, 5200);
+}
+
+startStatsIntro();
+</script>
+<div id="progressCounter" style="
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:'Shilla';
+    font-size:2rem;
+    color:#a8ffcd;
+    z-index:999999;
+    opacity:0;           
+    transition:opacity .5s ease;">
+    0 / 11
+</div>
+    <div id="clickGuide" style="
+        position:fixed;
+        top:70px;
+        left:50%;
+        transform:translateX(-50%);
+        font-family:'Shilla';
+        font-size:1.3rem;
+        color:#ffffffaa;
+        z-index:999999;
+        opacity:0;
+        transition:opacity 1s ease;">
+        생물을 클릭해보세요. 각 생물의 정보를 확인할 수 있습니다.
+    </div>
+    <div id="endingTextContainer" style="
+        position:fixed;
+        inset:0;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        width:100%;
+        color:white;
+        z-index:9999999;
+        opacity:0;
+        pointer-events:none;
+        font-family:'Shilla';
+        transition:opacity 1.8s ease;
+    ">
+        <div id="endingLine1" style="
+        font-size:1.8rem;
+        line-height:1.6;
+        margin-bottom:24px;
+        opacity:0;
+        transition:opacity 1.8s ease;
+        white-space:pre-line;
+">
+    화포천 습지는 전체 면적의 70% 이상이 자연습지로 남아 있는 국내 희귀 생태지역으로,
+    멸종위기종 20여 종과 600종 이상의 생물이 서식하는 생물다양성의 핵심 지대입니다.
+</div>
+
+
+        <div id="endingLine2" style="
+            font-size:2.4rem;
+            opacity:0;
+            transition:opacity 2s ease;
+        ">
+            사라져가는 생물들을 기억해주세요.
+        </div>
+    </div>
+    <div id="endingScreen" style="
+    display:none; position:fixed; inset:0; background:#000; 
+    z-index:9999999; justify-content:center; align-items:center; 
+    flex-direction:column;">
+
+    <h2 id="endingTitle" style="
+        font-family:'Shilla';
+        font-size:2rem;
+        color:white;
+        margin-bottom:30px;
+        opacity:0;
+        transition:opacity 1s ease;">
+        화포천 습지에 사는 멸종위기 생물들
+    </h2>
+
+    <div id="endingMessage" style="
+        font-family:'Shilla'; font-size:3rem; color:white;
+        opacity:0; transition:opacity 1.5s ease; margin-bottom:40px;">
+        사라져가는 생물들을 기억해주세요.
+    </div>
+
+    <div id="endingSub" style="
+        font-family:'Noto Sans KR';
+        color:#ccc;
+        opacity:0;
+        font-size:1.2rem;
+        margin-top:-6px;
+        max-width:800px;
+        text-align:center;
+        line-height:1.6;
+        transition:opacity 1.5s ease;">
+        우리가 더 이상 보지 못할지도 모를 생물들입니다.<br>
+        이들을 기억하고, 관심을 가져주세요.
+    </div>
+        
+        <div id="endingCards">
+            <div class="card">
+                <div class="imgWrap"><img src="ll.png" alt=""></div>
+                <h3>남생이</h3>
+                <p>고요한 물가를 지키는 한국 토종 거북</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="mm.png" alt=""></div>
+                <h3>새매</h3>
+                <p>재빠르게 숲을 누비는 민첩한 맹금류</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="nn.png" alt=""></div>
+                <h3>솔개</h3>
+                <p>넓은 하늘을 선회하는 갈색 맹금</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="oo.png" alt=""></div>
+                <h3>참매</h3>
+                <p>숲 속을 지배하는 강력한 사냥꾼</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="pp.png" alt=""></div>
+                <h3>매</h3>
+                <p>하늘을 가르는 세계에서 가장 빠른 맹금</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="qq.png" alt=""></div>
+                <h3>황새</h3>
+                <p>다시 돌아온 희귀한 흰색 철새</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="rr.png" alt=""></div>
+                <h3>참수리</h3>
+                <p>겨울 하늘을 장악하는 거대한 맹금류</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="ss.png" alt=""></div>
+                <h3>새호리기</h3>
+                <p>순식간에 먹이를 낚는 작은 사냥꾼</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="tt.png" alt=""></div>
+                <h3>알락개구리매</h3>
+                <p>습지를 스치듯 날아가는 희귀 맹금</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="uu.png" alt=""></div>
+                <h3>큰말똥가리</h3>
+                <p>평야 위를 선회하는 대형 맹금류</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="vv.png" alt=""></div>
+                <h3>흰목물떼새</h3>
+                <p>모래밭에서 뛰노는 작은 물가 새</p>
+            </div>
+            <div class="card">
+                <div class="imgWrap"><img src="ww.png" alt=""></div>
+                <h3>붉은배새매</h3>
+                <p>붉은 배빛이 돋보이는 우아한 맹금</p>
+            </div>
+        </div>
+        <div id="nextStepScreen" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#000;
+    z-index:99999999;
+    padding:80px 60px;
+    color:white;
+    font-family:'Noto Sans KR';
+    overflow-y:auto;
+"></div>
+
+<div id="flashBlack" style="
+    position:fixed;
+    inset:0;
+    background:#000;
+    opacity:0;
+    pointer-events:none;
+    z-index:999999999;"></div>
+
+<div id="flashReveal" style="
+    position:fixed;
+    inset:0;
+    background:url('after.jpg') center/cover no-repeat;
+    opacity:0;
+    pointer-events:none;
+    z-index:999999998;"></div>
+
+<div id="fullFadeBlack"></div>
+<div id="fullFadeAfter"></div>
+
+</div>
+    </div> </body>
+</html>
